@@ -5,6 +5,8 @@
 package main
 
 import (
+	plugins "github.com/open-source-firmware/go-tcg-storage/pkg/cli"
+	"github.com/open-source-firmware/go-tcg-storage/pkg/core/hash"
 	"log"
 
 	"github.com/alecthomas/kong"
@@ -24,6 +26,7 @@ func main() {
 		kong.Name(programName),
 		kong.Description(programDesc),
 		kong.UsageOnError(),
+		kong.Resolvers(plugins.ResolvePassword()),
 		kong.ConfigureHelp(kong.HelpOptions{
 			Compact: true,
 			Summary: true,
@@ -34,7 +37,9 @@ func main() {
 	if err != nil {
 		log.Fatalf("drive.Open: %v", err)
 	}
-	defer coreObj.Close()
+	defer func(coreObj *core.Core) {
+		_ = coreObj.Close()
+	}(coreObj)
 
 	snRaw, err := coreObj.DriveIntf.SerialNumber()
 	if err != nil {
@@ -46,7 +51,7 @@ func main() {
 	if cli.Sidpin != "" {
 		switch cli.Sidhash {
 		case "sedutil-dta":
-			spin = HashSedutilDTA(cli.Sidpin, sn)
+			spin = hash.HashSedutilDTA(cli.Sidpin, sn)
 		default:
 			log.Fatalf("Unknown hash method %q", cli.Sidhash)
 		}
@@ -64,14 +69,19 @@ func main() {
 	if err != nil {
 		log.Fatalf("locking.Initalize: %v", err)
 	}
-	defer cs.Close()
+	defer func(cs *core.ControlSession) {
+		_ = cs.Close()
+	}(cs)
 
 	var auth locking.LockingSPAuthenticator
-	pin := []byte{}
+
+	var pin []byte
 	if cli.Password != "" {
 		switch cli.Hash {
 		case "sedutil-dta":
-			pin = HashSedutilDTA(cli.Password, sn)
+			pin = hash.HashSedutilDTA(cli.Password, sn)
+		case "sedutil-sha512":
+			pin = hash.HashSedutil512(cli.Password, sn)
 		default:
 			log.Fatalf("Unknown hash method %q", cli.Hash)
 		}
@@ -94,7 +104,9 @@ func main() {
 	if err != nil {
 		log.Fatalf("locking.NewSession: %v", err)
 	}
-	defer l.Close()
+	defer func(l *locking.LockingSP) {
+		_ = l.Close()
+	}(l)
 
 	// Run the command
 	err = ctx.Run(&context{session: l})

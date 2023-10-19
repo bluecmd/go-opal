@@ -3,10 +3,10 @@ package main
 import (
 	"fmt"
 	"github.com/alecthomas/kong"
-	core "github.com/matfax/go-tcg-storage/pkg/core"
-	hash "github.com/matfax/go-tcg-storage/pkg/core/hash"
-	"github.com/matfax/go-tcg-storage/pkg/core/table"
-	"github.com/matfax/go-tcg-storage/pkg/core/uid"
+	core "github.com/open-source-firmware/go-tcg-storage/pkg/core"
+	hash "github.com/open-source-firmware/go-tcg-storage/pkg/core/hash"
+	"github.com/open-source-firmware/go-tcg-storage/pkg/core/table"
+	"github.com/open-source-firmware/go-tcg-storage/pkg/core/uid"
 )
 
 // context is the context struct required by kong command line parser
